@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gemini Live Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked@13.0.0/lib/marked.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.sh/@google/genai"
+      }
+    }
+  </script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute;visibility:hidden">
+    <defs>
+      <linearGradient id="brand-gradient-svg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#a88beb;" />
+        <stop offset="100%" style="stop-color:#f8ceec;" />
+      </linearGradient>
+    </defs>
+  </svg>
+  <div id="welcome-screen" class="hidden">
+    <div class="welcome-box">
+        <h2>Давай познакомимся</h2>
+        <p>Это поможет мне обращаться к тебе правильно</p>
+        <input type="text" id="name-input" placeholder="Как тебя зовут?">
+        <div class="gender-selection">
+            <button id="male-button" class="gender-btn" data-gender="male">Мужчина</button>
+            <button id="female-button" class="gender-btn" data-gender="female">Женщина</button>
+        </div>
+        <button id="welcome-continue-btn" disabled>Погнали чатиться</button>
+    </div>
+  </div>
+
+  <div id="app-container">
+    <header>
+      <button id="search-button" aria-label="Search Chat">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      </button>
+      <button id="title-button" class="title-button" aria-label="Просмотреть вложения" aria-haspopup="true" aria-expanded="false">
+          <span>Кодовый Джем</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+      <button id="settings-button" aria-label="Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+    <div id="chat-container">
+      <div id="chat-welcome-overlay" class="hidden">
+        <div class="chat-welcome-text">
+            <img src="https://raw.githubusercontent.com/vellymad/-/34fa630b8462dede659d33406115e50d05891ad8/1000012008_11zon.png" alt="Dzhem Logo" class="chat-welcome-logo">
+            <h1 id="chat-welcome-name"></h1>
+            <p>А меня зовут Джем. ;)</p>
+        </div>
+      </div>
+      <!-- Chat messages will be appended here -->
+    </div>
+    <form id="input-form">
+      <div id="attachment-preview-container" class="hidden"></div>
+      <div id="input-bar">
+        <div id="attachment-container">
+            <div id="attachment-menu">
+                <label for="gallery-input" class="attachment-option">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <span>Галерея</span>
+                </label>
+                <input type="file" id="gallery-input" accept="image/*,video/*" hidden multiple>
+                <label for="file-input" class="attachment-option">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                    <span>Файлы</span>
+                </label>
+                <input type="file" id="file-input" accept=".pdf,.txt,application/pdf,text/plain" hidden multiple>
+            </div>
+            <button type="button" id="attachment-button" aria-label="Attach file">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6.003 6.003 0 1 1-8.49-8.49l9.19-9.19a4.002 4.002 0 0 1 5.66 5.66l-9.2 9.19a2.001 2.001 0 1 1-2.83-2.83l8.49-8.48"></path></svg>
+            </button>
+        </div>
+        <textarea id="message-input" placeholder="Джем на связи..." rows="1" aria-label="Message Input"></textarea>
+        <button id="send-button" type="submit" aria-label="Voice Input">
+            <span id="voice-icon" class="icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+                <!-- The rounded, different height bars, made larger and repositioned -->
+                <rect x="7" y="16" width="3" height="9" rx="1.5"></rect>
+                <rect x="12" y="10" width="3" height="15" rx="1.5"></rect>
+                <rect x="17" y="4" width="3" height="21" rx="1.5"></rect>
+                <!-- A proper, beautiful star, centered above the left bar -->
+                <path id="voice-icon-star" d="M8.5 8 L 9.25 10.25 L 11.5 11 L 9.25 11.75 L 8.5 14 L 7.75 11.75 L 5.5 11 L 7.75 10.25 Z"></path>
+              </svg>
+            </span>
+            <span id="send-icon" class="icon-wrapper hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-hidden="true">
+                    <path d="M3.4 20.4l17.45-7.48c.81-.35.81-1.49 0-1.84L3.4 3.6c-.66-.29-1.39.2-1.39.91L2 9.12c0 .5.37.93.87.99L17 12l-14.13 1.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z"/>
+                </svg>
+            </span>
+            <span id="stop-icon" class="icon-wrapper hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" role="img" aria-hidden="true">
+                    <rect x="6" y="6" width="12" height="12" rx="3"></rect>
+                </svg>
+            </span>
+        </button>
+      </div>
+    </form>
+    <div id="screenshot-controls" class="hidden">
+        <button id="screenshot-cancel-btn">Отмена</button>
+        <button id="screenshot-done-btn" disabled>Готово</button>
+    </div>
+  </div>
+  
+  <div id="attachments-drawer">
+    <div id="attachments-backdrop"></div>
+    <div id="attachments-content">
+      <div id="attachments-header">
+        <h2>Вложения</h2>
+        <button id="attachments-close-button" aria-label="Close attachments">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div id="attachments-grid-container">
+        <p id="no-attachments-message" class="hidden">Вложений пока нет</p>
+        <div id="attachments-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="lightbox">
+    <div id="lightbox-content"></div>
+  </div>
+
+  <div id="settings-modal">
+    <div id="settings-backdrop"></div>
+    <div id="settings-content">
+      <div id="settings-header">
+        <button id="settings-back-button" aria-label="Back to chat">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </button>
+        <h2>Настройки</h2>
+      </div>
+      <div id="settings-body">
+          <button id="parameters-button" class="settings-action-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+              <span>Параметры</span>
+          </button>
+          <button id="personalization-button" class="settings-action-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span>Персонализация</span>
+          </button>
+          <button id="reset-settings-button" class="settings-action-button destructive">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+              <span>Сброс настроек</span>
+          </button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="parameters-modal">
+    <div id="parameters-backdrop"></div>
+    <div id="parameters-content">
+      <div id="parameters-header">
+        <button id="parameters-back-button" aria-label="Back to settings">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </button>
+        <h2>Параметры</h2>
+      </div>
+      <div id="parameters-body">
+        <div class="settings-section">
+          <h3 class="settings-section-title">Модель ИИ</h3>
+          <div class="settings-radio-group">
+            <label class="settings-radio-label">
+              <input type="radio" name="ai-model" id="gemini-model-radio" value="gemini" checked>
+              <div class="settings-radio-button">
+                <span>Google Gemini</span>
+              </div>
+            </label>
+            <label class="settings-radio-label">
+              <input type="radio" name="ai-model" id="deepseek-model-radio" value="deepseek">
+              <div class="settings-radio-button">
+                <span>Deepseek</span>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3 class="settings-section-title">NSFW (18+)</h3>
+          <div class="settings-switch-wrapper">
+              <span class="parameter-item-label">Разрешить небезопасный контент</span>
+              <label class="settings-switch">
+                  <input type="checkbox" id="nsfw-toggle">
+                  <span class="slider"></span>
+              </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="search-overlay">
+    <div id="search-overlay-header">
+        <button id="search-overlay-back-button" aria-label="Back to chat">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </button>
+        <input type="text" id="search-overlay-input" placeholder="Поиск в чате..." aria-label="Search Input">
+    </div>
+    <div id="search-overlay-body">
+        <div id="search-results-list">
+            <!-- Search results will be appended here -->
+        </div>
+        <div id="search-no-results" class="hidden">
+            <p>Результаты не найдены</p>
+        </div>
+    </div>
+  </div>
+  
+  <div id="modify-sheet">
+    <div id="modify-sheet-backdrop"></div>
+    <div id="modify-sheet-content">
+      <div id="modify-sheet-handle"></div>
+      <button class="sheet-option" id="shorter-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="17" y2="6"></line><line x1="3" y1="12" x2="11" y2="12"></line></svg>
+        <span>Короче</span>
+      </button>
+      <button class="sheet-option" id="longer-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="17" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <span>Длиннее</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="audio-mode-overlay" class="hidden">
+    <div id="audio-mode-header">
+        <div class="title-line">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 28 28" fill="currentColor">
+              <rect x="7" y="16" width="3" height="9" rx="1.5"></rect>
+              <rect x="12" y="10" width="3" height="15" rx="1.5"></rect>
+              <rect x="17" y="4" width="3" height="21" rx="1.5"></rect>
+              <path d="M8.5 8 L 9.25 10.25 L 11.5 11 L 9.25 11.75 L 8.5 14 L 7.75 11.75 L 5.5 11 L 7.75 10.25 Z"></path>
+            </svg>
+            <h2>Аудиочат</h2>
+        </div>
+        <div id="audio-mode-timer">00:00</div>
+    </div>
+    <canvas id="sphere-canvas"></canvas>
+    <div id="audio-mode-status"></div>
+    <div id="audio-mode-controls">
+        <button id="audio-mode-pause-button" class="audio-control-button" aria-label="Pause Microphone">
+            <!-- Иконка активного микрофона (показывается, когда микрофон выключен) -->
+            <svg id="audio-pause-icon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path></svg>
+            <!-- Иконка выключенного микрофона (показывается, когда микрофон включен) -->
+            <svg id="audio-mic-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="1" y1="23" x2="23" y2="1"></line>
+            </svg>
+        </button>
+        <button id="audio-mode-end-button" class="audio-control-button end-call" aria-label="End Audio Chat">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+            <path transform="rotate(135 12 12)" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.02.74-.25 1.02l-2.2 2.2z"/>
+          </svg>
+        </button>
+    </div>
+  </div>
+
+  <div id="personalization-modal">
+    <div id="personalization-backdrop"></div>
+    <div id="personalization-content">
+      <div id="personalization-header">
+        <button id="personalization-back-button" aria-label="Back to settings">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </button>
+        <h2>Персонализация</h2>
+      </div>
+      <div id="personalization-body">
+        <p>Ты можешь изменить свои имя и пол</p>
+        <input type="text" id="personalization-name-input" placeholder="Как тебя зовут?">
+        <div class="gender-selection">
+            <button id="personalization-male-button" class="gender-btn" data-gender="male">Мужчина</button>
+            <button id="personalization-female-button" class="gender-btn" data-gender="female">Женщина</button>
+        </div>
+        <button id="personalization-save-btn" disabled>Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="reset-confirmation-modal">
+      <div id="reset-confirmation-backdrop"></div>
+      <div id="reset-confirmation-content">
+          <div id="reset-confirmation-header">
+             <button id="reset-confirmation-back-button" aria-label="Back to settings">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+             </button>
+             <h2>Сброс настроек</h2>
+          </div>
+          <div id="reset-confirmation-body">
+            <p>Данная опция сбрасывает все установленные настройки, историю чата и вложений</p>
+            <div id="reset-confirmation-actions">
+                <button id="reset-confirm-btn">Подтвердить</button>
+            </div>
+          </div>
+      </div>
+  </div>
+  
+  <div id="screenshot-preview-overlay" class="hidden">
+      <div id="screenshot-preview-header">
+          <button id="screenshot-preview-close-btn" aria-label="Close Preview">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+          <button id="screenshot-preview-save-btn" aria-label="Save Screenshot">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              <span>Сохранить</span>
+          </button>
+      </div>
+      <div id="screenshot-preview-scroll-container">
+          <div id="screenshot-preview-content">
+              <!-- Cloned messages will appear here -->
+          </div>
+      </div>
+  </div>
+  
+  <div id="app-logo-for-screenshot" class="hidden">
+      <img src="https://raw.githubusercontent.com/vellymad/-/34fa630b8462dede659d33406115e50d05891ad8/1000012008_11zon.png" alt="Dzhem Logo">
+      <span>Кодовый Джем</span>
+  </div>
+
+  <div id="confetti-container"></div>
+
+  <script type="module" src="index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
