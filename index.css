@@ -1,0 +1,570 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+*/
+
+@font-face {
+  font-family: 'GameFont';
+  src: url('font.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'ChapterFont';
+  src: url('https://cdn.jsdelivr.net/gh/vellymad/-@66b19a1bf04530f46697a9e7e297fc2fd6279066/Foxcroft%20NF%20Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  --default-glow-color: #9d2f01;
+  --hover-glow-color: #f7dc8f;
+  --text-color: #E0C78A;
+  --text-shadow-color: rgba(0, 0, 0, 0.6);
+  --book-shadow-color: rgba(0, 0, 0, 0.7);
+  --title-shadow-color: rgba(0, 0, 0, 0.5);
+}
+
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+body {
+  background-image: url('https://github.com/vellymad/-/blob/018feba49050b0d55ec03a933faed080a75d4902/1758515477545%20(2).jpg?raw=true');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.main-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.book-wrapper {
+  position: relative;
+  width: 90vw;
+  max-width: 450px;
+  max-height: 90vh;
+  aspect-ratio: 480 / 640; 
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4)) drop-shadow(0 12px 20px rgba(0, 0, 0, 0.3)) drop-shadow(0 25px 50px rgba(0, 0, 0, 0.25));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.book-image, .game-title {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+  object-fit: contain;
+}
+
+.game-title {
+  width: 70%;
+  height: auto;
+  top: 17%;
+  left: 54%;
+  transform: translateX(-50%);
+  filter: drop-shadow(2px 2px 3px var(--title-shadow-color)) drop-shadow(-1px -1px 2px rgba(255, 239, 194, 0.25));
+}
+
+.buttons-container {
+  position: absolute;
+  top: 51%;
+  left: 53%;
+  transform: translateX(-50%);
+  width: 55%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-button {
+  position: relative; /* For pseudo-element positioning */
+  isolation: isolate; /* New stacking context */
+  background-color: transparent;
+  border: none;
+  color: var(--text-color);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.2vh;
+  font-weight: 700;
+  padding: 0;
+  text-shadow: 1px 1px 2px var(--text-shadow-color);
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out, color 0.2s ease-in-out;
+  will-change: transform, filter;
+  width: 100%;
+  aspect-ratio: 430 / 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  filter: drop-shadow(2px 3px 3px rgba(0, 0, 0, 0.4));
+  transform: translateZ(0); /* Prevents font flickering on hover */
+}
+
+.menu-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url('https://github.com/vellymad/-/blob/675e8c9f93e3b143fc7831972b3de24f839406fb/%D0%9A%D0%BD%D0%BE%D0%BF%D0%BA%D0%B0.png?raw=true') center center / 100% 100% no-repeat;
+  transition: filter 0.2s ease-in-out;
+}
+
+.menu-button:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(3px 5px 5px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 8px var(--hover-glow-color));
+  color: #f7dc8f;
+}
+
+.menu-button:hover::before {
+  filter: none; /* remove tint on hover to make it glow brighter */
+}
+
+.chapter-select-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 60%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  perspective: 800px;
+}
+
+.book-wrapper.open .chapter-select-container {
+  top: 50%;
+  left: 73%;
+  width: 40%;
+  height: auto;
+  justify-content: flex-start;
+  gap: 15px;
+}
+
+.chapter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  transform: rotateX(5deg) rotate(-1deg); /* Применяем небольшой 3D наклон для эффекта бумаги */
+  transform-style: preserve-3d;
+}
+
+.chapter-item {
+  position: relative; /* For tooltip positioning */
+  background: none;
+  border: none;
+  color: #101023;
+  font-family: 'ChapterFont', serif;
+  font-size: 2vh;
+  font-weight: normal;
+  text-shadow: none;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 10px;
+}
+
+.chapter-item > span {
+  display: inline-block;
+}
+
+.chapter-item.locked {
+  cursor: pointer; /* Changed from not-allowed to allow clicks */
+}
+
+.chapter-item.locked > span {
+  opacity: 0.6;
+}
+
+.lock-icon {
+  position: relative;
+  height: 2.0vh;
+  width: auto;
+  transform: rotate(1deg) rotateX(-5deg);
+  right: -4px; /* Base for the first locked chapter (Chapter II) */
+  opacity: 0.85;
+}
+
+/* Creates a minimal diagonal from top-right to bottom-left */
+.chapter-item:nth-child(3) .lock-icon { right: -3px; }
+.chapter-item:nth-child(4) .lock-icon { right: -2px; }
+.chapter-item:nth-child(5) .lock-icon { right: -1px; }
+.chapter-item:nth-child(6) .lock-icon { right: 0; }
+.chapter-item:nth-child(7) .lock-icon { right: 1px; }
+.chapter-item:nth-child(8) .lock-icon { right: 2px; }
+.chapter-item:nth-child(9) .lock-icon { right: 3px; }
+.chapter-item:nth-child(10) .lock-icon { right: 4px; }
+
+
+.back-button {
+  width: 70%;
+}
+
+.chapter-select-container .back-button {
+  filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.6)) drop-shadow(0px 3px 5px rgba(0, 0, 0, 0.3));
+  /* Убрали наклон */
+}
+
+.chapter-select-container .back-button:hover {
+  transform: scale(1.05); /* Убрали наклон при наведении */
+  filter: drop-shadow(2px 3px 3px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 8px var(--hover-glow-color));
+}
+
+.book-wrapper.open {
+  position: absolute;
+  top: 49%;
+  left: 15%;
+  transform: translate(-50%, -50%);
+  height: 83vh;
+  width: 160vw;
+  max-width: 1100px;
+  aspect-ratio: auto;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.4)) drop-shadow(0 18px 30px rgba(0, 0, 0, 0.3)) drop-shadow(0 35px 70px rgba(0, 0, 0, 0.25));
+}
+
+.book-wrapper.open .book-image {
+  object-fit: fill; /* Растягивает изображение, чтобы заполнить контейнер, искажая пропорции */
+}
+
+.tooltip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: 90%;
+  padding: 0.8vh 1.5vh;
+  background: rgba(20, 15, 10, 0.9);
+  color: var(--text-color);
+  border: 1px solid rgba(157, 47, 1, 0.5);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+  font-size: 1.6vh;
+  text-align: center;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  z-index: 10;
+  pointer-events: none;
+  animation: fadeIn 0.3s ease-out;
+  white-space: normal;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* === Game View Styles === */
+
+.game-view-container {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.game-panel-trigger {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 20vh;
+  z-index: 5;
+  cursor: pointer;
+}
+
+.fade-in-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: #000;
+  z-index: 100;
+  transition: opacity 1.2s ease-in-out;
+  pointer-events: none;
+}
+
+.fade-in-overlay.hidden {
+  opacity: 0;
+}
+
+.game-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(8px);
+  transform: scale(1.05);
+  z-index: 0;
+}
+
+.game-top-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 2vh 3vw;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+  transform: translateY(-100%);
+  transition: transform 0.4s ease-in-out;
+  z-index: 10;
+  cursor: default;
+}
+
+.game-top-panel.visible {
+  transform: translateY(0);
+}
+
+.panel-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  width: 7vh;
+  height: 7vh;
+  filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.7));
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.panel-button:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(2px 3px 3px rgba(0,0,0,0.5)) drop-shadow(0 0 5px var(--hover-glow-color));
+}
+
+.panel-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.confirmation-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  backdrop-filter: blur(4px);
+  cursor: default;
+}
+
+.confirmation-dialog {
+  position: relative;
+  background: url('https://cdn.jsdelivr.net/gh/vellymad/-@718a6af3fa910f893c0ba1d934996188ea678511/%D0%90%D0%B2%D1%82%D0%BE%D1%80.png') center center / 100% 100% no-repeat;
+  width: 80vw;
+  max-width: 650px;
+  height: 10vh; /* Added to allow vertical stretching */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Pushes title up and buttons down */
+  align-items: center;
+  text-align: center;
+  color: white;
+  font-family: 'Nunito', sans-serif;
+  filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+  animation: dialog-animation 0.3s ease-out;
+  padding: 8vh 5vw;
+  border: none;
+}
+
+.confirmation-dialog p {
+  margin: 0 0 2vh 0;
+  padding: 0 12%;
+  font-size: 2.3vh;
+  font-weight: 600;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.confirmation-dialog-buttons {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  /* Сдвигаем группу кнопок вверх, чтобы они попали на нужные места в фоне. */
+  top: 1vh;
+}
+
+.confirmation-dialog-buttons button {
+  background: url('https://cdn.jsdelivr.net/gh/vellymad/-@718a6af3fa910f893c0ba1d934996188ea678511/%D0%92%D1%8B%D0%B1%D0%BE%D1%80.png') center center / 100% 100% no-repeat;
+  border: none;
+  color: white;
+  font-family: 'GameFont', sans-serif;
+  font-size: 2.0vh;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
+  /* Кнопки теперь шире */
+  width: 93%;
+  height: 9vh;
+  max-width: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* Используем отрицательный margin для второй кнопки, чтобы "подтянуть" ее */
+.confirmation-dialog-buttons button:last-child {
+  margin-top: -2vh;
+}
+
+.confirmation-dialog-buttons button:hover {
+  transform: scale(1.05);
+  filter: brightness(1.2);
+}
+
+@keyframes dialog-animation {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* === Dialogue Box Styles === */
+
+.dialogue-container {
+  position: absolute;
+  bottom: 3vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90vw;
+  max-width: 650px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'GameFont', sans-serif;
+  z-index: 20;
+}
+
+.character-nameplate-wrapper {
+  width: 100%;
+  padding-left: 5%; /* Position nameplate to the left */
+  position: relative;
+  z-index: 2;
+  margin-bottom: -3.5vh; /* Overlap effect */
+}
+
+.character-nameplate {
+  position: relative;
+  display: inline-block; /* Fit content */
+  background: linear-gradient(to bottom, #7e8c3b, #5a631c);
+  color: #fff;
+  padding: 1vh 3vw;
+  border-radius: 10px;
+  font-size: clamp(1rem, 2.2vh, 1.4rem);
+  box-shadow: 
+    inset 0 0 0 2px #d4aa4f,
+    0 2px 5px rgba(0,0,0,0.4);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+}
+
+.dialogue-box {
+  position: relative;
+  background-color: #6a4a2f;
+  color: #fff;
+  width: 100%;
+  border-radius: 15px;
+  padding: 5vh 5vw 3vh; /* Increased top padding for nameplate */
+  z-index: 1;
+  box-shadow: 
+    inset 0 0 0 2px #d4aa4f,
+    inset 0 0 0 4px #523821,
+    0 4px 10px rgba(0,0,0,0.5);
+}
+
+.dialogue-text {
+  margin: 0;
+  padding: 0;
+  font-size: clamp(1.1rem, 2.5vh, 1.6rem);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+  min-height: 2em; /* Ensure box has some height even with short text */
+}
+
+.dialogue-choices {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5vh;
+  margin-top: 1.5vh;
+}
+
+.dialogue-choice-button {
+  position: relative;
+  background: linear-gradient(to bottom, #7e8c3b, #5a631c);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 1.5vh 3vw;
+  font-family: 'GameFont', sans-serif;
+  font-size: clamp(1rem, 2.2vh, 1.4rem);
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  box-shadow: 
+    inset 0 0 0 2px #d4aa4f,
+    0 2px 5px rgba(0,0,0,0.4);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+}
+
+.dialogue-choice-button:hover {
+  transform: scale(1.03);
+  filter: brightness(1.15);
+}
